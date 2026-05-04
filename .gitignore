@@ -1,0 +1,4 @@
+# Neovim runtime files - auto-generated
+spell/
+*.log
+lazy-lock.json
