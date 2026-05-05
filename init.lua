@@ -144,10 +144,7 @@ vim.keymap.set({ "n", "v" }, "<leader>X", '"_d', { desc = "Delete without yankin
 vim.keymap.set("n", "<leader>bn", ":bnext<CR>", { desc = "Next buffer" })
 vim.keymap.set("n", "<leader>bp", ":bprevious<CR>", { desc = "Previous buffer" })
 
-vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Move to left window" })
-vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Move to bottom window" })
-vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Move to top window" })
-vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Move to right window" })
+-- Ctrl+h/j/k/l navigation handled by vim-tmux-navigator (works across nvim splits AND tmux panes)
 
 vim.keymap.set("n", "<leader>sv", ":vsplit<CR>", { desc = "Split window vertically" })
 vim.keymap.set("n", "<leader>sh", ":split<CR>", { desc = "Split window horizontally" })
@@ -319,6 +316,8 @@ vim.pack.add({
 	"https://github.com/nvim-lualine/lualine.nvim",  -- beautiful statusline
 	-- Git
 	"https://github.com/tpope/vim-fugitive",         -- full git: :Git commit, :Git log, :Git diff
+	-- Tmux integration
+	"https://github.com/christoomey/vim-tmux-navigator", -- Ctrl+h/j/k/l across nvim splits AND tmux panes
 	-- Color
 	"https://github.com/uga-rosa/ccc.nvim",          -- colour highlighter for CSS / Tailwind
 	-- Colorscheme
@@ -348,6 +347,7 @@ packadd("twilight.nvim")
 packadd("zen-mode.nvim")
 packadd("lualine.nvim")
 packadd("vim-fugitive")
+packadd("vim-tmux-navigator")
 packadd("ccc.nvim")
 packadd("tokyonight.nvim")
 
