@@ -426,7 +426,9 @@ local setup_treesitter = function()
 	end
 
 	if #parsers_to_install > 0 then
-		treesitter.install(parsers_to_install)
+		-- max_jobs kept low: firing 20+ concurrent codeload.github.com
+		-- downloads on a fresh install trips GitHub's anonymous rate limit (429)
+		treesitter.install(parsers_to_install, { max_jobs = 4 })
 	end
 
 	local group = vim.api.nvim_create_augroup("TreeSitterConfig", { clear = true })
