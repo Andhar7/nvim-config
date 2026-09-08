@@ -119,7 +119,7 @@ vim.opt.maxmempattern = 20000 -- increase max memory
 vim.g.mapleader = " " -- space for leader
 vim.g.maplocalleader = " " -- space for localleader
 
-vim.g.python3_host_prog = vim.fn.expand("~/.pyenv/versions/3.12.0/bin/python")
+vim.g.python3_host_prog = vim.fn.exepath("python3") -- was a stale pyenv path; resolve whatever python3 is on PATH
 vim.g.loaded_perl_provider = 0
 vim.g.loaded_ruby_provider = 0
 
@@ -174,10 +174,34 @@ vim.keymap.set("n", "<leader>td", function()
 end, { desc = "Toggle diagnostics" })
 
 -- ============================================================================
+-- FILETYPE DETECTION — Django templates (app/templates/**/*.html) get proper
+-- {% %} / {{ }} highlighting via Neovim's bundled htmldjango syntax+indent,
+-- instead of being treated as plain html.
+-- ============================================================================
+vim.filetype.add({
+	pattern = {
+		[".*/templates/.*%.html"] = "htmldjango",
+	},
+})
+
+-- ============================================================================
 -- AUTOCMDS
 -- ============================================================================
 
 local augroup = vim.api.nvim_create_augroup("UserConfig", { clear = true })
+
+-- PEP8 indentation for Python (global tabstop/shiftwidth above is 2, for web work)
+vim.api.nvim_create_autocmd("FileType", {
+	group = augroup,
+	pattern = "python",
+	callback = function()
+		vim.opt_local.tabstop = 4
+		vim.opt_local.shiftwidth = 4
+		vim.opt_local.softtabstop = 4
+		vim.opt_local.expandtab = true
+		vim.opt_local.colorcolumn = "88" -- black's default line length
+	end,
+})
 
 -- Format on save (ONLY real file buffers, ONLY when efm is attached)
 vim.api.nvim_create_autocmd("BufWritePre", {
@@ -645,6 +669,7 @@ require("which-key").add({
 	{ "<leader>h", group = "Git Hunks" },
 	{ "<leader>o", group = "Organise Imports" },
 	{ "<leader>r", group = "Rename" },
+	{ "<leader>R", group = "Run" },
 	{ "<leader>s", group = "Split" },
 	{ "<leader>x", group = "Trouble" },
 	{ "<leader>z", group = "Zen Mode" },
@@ -885,7 +910,7 @@ vim.lsp.config("clangd", {})
 vim.lsp.config("emmet_ls", {
 	-- expands  div.container>ul>li*5  →  full HTML  (essential for HTML/CSS)
 	filetypes = {
-		"html", "css", "scss", "sass",
+		"html", "htmldjango", "css", "scss", "sass",
 		"javascript", "javascriptreact",
 		"typescript", "typescriptreact",
 		"vue", "svelte",
@@ -935,6 +960,10 @@ do
 
 	local flake8 = require("efmls-configs.linters.flake8")
 	local black = require("efmls-configs.formatters.black")
+	local isort = require("efmls-configs.formatters.isort")
+
+	local djlint_lint = require("efmls-configs.linters.djlint")
+	local djlint_fmt = require("efmls-configs.formatters.djlint")
 
 	local prettier_d = require("efmls-configs.formatters.prettier_d")
 	local eslint_d = require("efmls-configs.linters.eslint_d")
@@ -951,6 +980,7 @@ do
 			"css",
 			"dockerfile",
 			"html",
+			"htmldjango",
 			"javascript",
 			"javascriptreact",
 			"json",
@@ -970,13 +1000,14 @@ do
 				css = { prettier_d },
 				dockerfile = { hadolint },
 				html = { prettier_d },
+				htmldjango = { djlint_lint, djlint_fmt },
 				javascript = { eslint_d, prettier_d },
 				javascriptreact = { eslint_d, prettier_d },
 				json = { eslint_d, fixjson },
 				jsonc = { eslint_d, fixjson },
 				lua = { luacheck, stylua },
 				markdown = { prettier_d },
-				python = { flake8, black },
+				python = { flake8, isort, black },
 				sh = { shellcheck, shfmt },
 				typescript = { eslint_d, prettier_d },
 				typescriptreact = { eslint_d, prettier_d },
@@ -1086,7 +1117,28 @@ vim.keymap.set("t", "<Esc>", function()
 	end
 end, { noremap = true, silent = true, desc = "Close floating terminal" })
 
+-- ============================================================================
+-- RUN — Python / Django, PyCharm-style run buttons. Uses `uv run` so it always
+-- executes inside the project's .venv, matching the uv init/uv sync workflow.
+-- ============================================================================
+local function run_in_split(cmd)
+	return function()
+		vim.cmd("split")
+		vim.cmd("resize 15")
+		vim.cmd("terminal " .. cmd)
+		vim.cmd("startinsert")
+	end
+end
 
+vim.keymap.set("n", "<leader>Rr", function()
+	local file = vim.fn.expand("%")
+	run_in_split("uv run python " .. vim.fn.shellescape(file))()
+end, { desc = "Run current file" })
+vim.keymap.set("n", "<leader>Rs", run_in_split("uv run python manage.py runserver"), { desc = "Django: runserver" })
+vim.keymap.set("n", "<leader>Rm", run_in_split("uv run python manage.py migrate"), { desc = "Django: migrate" })
+vim.keymap.set("n", "<leader>Rk", run_in_split("uv run python manage.py makemigrations"), { desc = "Django: makemigrations" })
+vim.keymap.set("n", "<leader>Rh", run_in_split("uv run python manage.py shell"), { desc = "Django: shell" })
+vim.keymap.set("n", "<leader>Rt", run_in_split("uv run python manage.py test"), { desc = "Django: test" })
 
 
 
